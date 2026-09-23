@@ -72,7 +72,7 @@
             margin: 10px;
             font-family: inherit;
             font-weight: bold;
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: all 0.2s;
         }
         .btn:active {
             transform: translateY(4px);
@@ -164,7 +164,12 @@
             background: #2ed573;
             transition: width 0.3s;
         }
-        #action-btn { position: absolute; bottom: 30px; right: 30px; background: #ffa502; box-shadow: 0 5px 0 #cc8400; }
+        /* Görev Butonu Varsayılan Ayarları (Oyun İçi JS ile güncellenecek) */
+        #action-btn { 
+            position: absolute; bottom: 30px; right: 30px; 
+            background: #ffa502; box-shadow: 0 5px 0 #cc8400; 
+            opacity: 0.4; pointer-events: none;
+        }
         #meeting-btn { position: absolute; bottom: 30px; right: 190px; background: #3742fa; box-shadow: 0 5px 0 #2f3542; }
         #settings-hud-btn { top: 20px; right: 20px; position: absolute; padding: 8px 15px; font-size: 1rem; }
         #restart-hud-btn { top: 20px; right: 75px; position: absolute; padding: 8px 15px; font-size: 1rem; background: #ff4757; box-shadow: 0 4px 0 #b33939; }
@@ -288,7 +293,7 @@
         <h1>Nasıl Oynanır?</h1>
         <div style="background:white; padding:20px; border-radius:20px; color:#333; width:min(90vw, 450px); text-align:left; font-size:1rem;">
             <p>🐾 <b>Görevler:</b> Odalardaki görevleri tamamla.</p>
-            <p>🕵️ <b>İmpostor:</b> Mürettebatı gizlice ortadan kaldır ve sabotaj yap!</p>
+            <p>🕵️ <b>Suçlu:</b> Mürettebatı gizlice ortadan kaldır ve sabotaj yap!</p>
             <p>🗣️ <b>Acil Durum:</b> Toplantıda tartışıp şüphelileri oyla.</p>
             <p>🎮 <b>Kontroller:</b> WASD veya ekrandaki joystick ile hareket et.</p>
         </div><br>
@@ -386,7 +391,6 @@
     let currentTaskTarget = null;
     let gameMap = { width: 2400, height: 1800, rooms: [] };
     
-    // YILDIZLI UZAY ARKA PLANI İÇİN VERİLER
     let backgroundStars = [];
 
     let keys = {};
@@ -488,7 +492,6 @@
         generateStars();
         requestAnimationFrame(gameLoop);
         
-        // Zeynep'e özel başlangıç mesajı
         speak("Merhaba Zeynep, Oyun başladı! Görevleri tamamla veya suçluyu bul.");
     }
 
@@ -618,9 +621,44 @@
         tasks.forEach(t => {
             if (!t.completed) {
                 let dist = Math.hypot(player.x - t.x, player.y - t.y);
-                if (dist < 60) currentTaskTarget = t;
+                if (dist < 80) currentTaskTarget = t; // Görev algılama mesafesini biraz artırdık
             }
         });
+
+        // --- DİNAMİK BUTON GÖRÜNÜMÜ GÜNCELLEMESİ (AMONG US TARZI) ---
+        let actionBtn = document.getElementById('action-btn');
+        if (player.isImpostor) {
+            // Suçlu hedefe yaklaştı mı?
+            let targetAI = aiList.find(ai => ai.alive && Math.hypot(player.x - ai.x, player.y - ai.y) < 80);
+            if (targetAI) {
+                actionBtn.style.opacity = '1';
+                actionBtn.style.pointerEvents = 'auto';
+                actionBtn.style.background = '#ff4757';
+                actionBtn.style.boxShadow = '0 5px 0 #b33939';
+                actionBtn.innerText = '🔪 ELE';
+            } else {
+                actionBtn.style.opacity = '0.4';
+                actionBtn.style.pointerEvents = 'none';
+                actionBtn.style.background = '#ff4757';
+                actionBtn.style.boxShadow = '0 5px 0 #b33939';
+                actionBtn.innerText = '🔪 ELE';
+            }
+        } else {
+            // Mürettebat göreve yaklaştı mı?
+            if (currentTaskTarget) {
+                actionBtn.style.opacity = '1';
+                actionBtn.style.pointerEvents = 'auto';
+                actionBtn.style.background = '#ffa502';
+                actionBtn.style.boxShadow = '0 5px 0 #cc8400';
+                actionBtn.innerText = '⭐ GÖREV YAP';
+            } else {
+                actionBtn.style.opacity = '0.4';
+                actionBtn.style.pointerEvents = 'none';
+                actionBtn.style.background = '#ffa502';
+                actionBtn.style.boxShadow = '0 5px 0 #cc8400';
+                actionBtn.innerText = '⭐ GÖREV';
+            }
+        }
     }
 
     function render() {
@@ -744,9 +782,9 @@
             document.getElementById('mg-title').innerText = currentTaskTarget.name;
             document.getElementById('mg-click-btn').innerText = `Tıkla! (0/5)`;
             document.getElementById('minigame-modal').classList.remove('hidden');
-            gameRunning = false;
+            gameRunning = false; // Görev açılınca oyunu durdur
         } else if (player.isImpostor) {
-            let targetAI = aiList.find(ai => ai.alive && Math.hypot(player.x - ai.x, player.y - ai.y) < 60);
+            let targetAI = aiList.find(ai => ai.alive && Math.hypot(player.x - ai.x, player.y - ai.y) < 80);
             if (targetAI) {
                 targetAI.alive = false;
                 speak("Birisi ortadan kayboldu!");
@@ -760,18 +798,30 @@
         document.getElementById('mg-click-btn').innerText = `Tıkla! (${clickCount}/5)`;
         if (clickCount >= 5) {
             activeMinigameTask.completed = true;
+            
+            // Görev tamamlandığında oyun döngüsünü yeniden ateşle (HATA ÇÖZÜMÜ)
+            if (!gameRunning) {
+                gameRunning = true;
+                requestAnimationFrame(gameLoop);
+            }
+            
             player.tasksCompleted++;
             document.getElementById('task-progress-fill').style.width = `${(player.tasksCompleted / player.totalTasks) * 100}%`;
-            closeMinigame(true);
+            
+            // Modal'ı kapat
+            document.getElementById('minigame-modal').classList.add('hidden');
+            speak("Görev tamamlandı!");
+            checkWinConditions();
         }
     }
 
     function closeMinigame(success) {
         document.getElementById('minigame-modal').classList.add('hidden');
-        gameRunning = true;
-        if (success) {
-            speak("Görev tamamlandı!");
-            checkWinConditions();
+        
+        // "İptal" tuşuna basıldığında duran oyun motorunu yeniden çalıştırıyoruz (HATA ÇÖZÜMÜ)
+        if (!gameRunning) {
+            gameRunning = true;
+            requestAnimationFrame(gameLoop);
         }
     }
 
@@ -810,7 +860,13 @@
 
     function castVote(targetName) {
         document.getElementById('meeting-modal').classList.add('hidden');
-        gameRunning = true;
+        
+        // Oylama bitince duran motoru tekrar çalıştırıyoruz
+        if (!gameRunning) {
+            gameRunning = true;
+            requestAnimationFrame(gameLoop);
+        }
+        
         speak(`${targetName} oylandı.`);
         checkWinConditions();
     }
