@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Hello Kitty Mystery Crew</title>
     <style>
         * {
@@ -10,7 +10,7 @@
             user-select: none;
             -webkit-user-select: none;
         }
-        body {
+        body, html {
             margin: 0;
             padding: 0;
             background: #1a1a2e;
@@ -18,11 +18,15 @@
             overflow: hidden;
             color: #fff;
             touch-action: none;
+            /* Mobil tarayıcı çubuklarına karşı Dinamik Yükseklik koruması */
+            height: 100vh; 
+            height: 100dvh; 
+            width: 100vw;
         }
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -33,7 +37,7 @@
             display: block;
             background: #000;
         }
-        /* Responsive UI Screens for iPad & Mobile */
+        /* Responsive UI Screens */
         .screen {
             position: absolute;
             top: 0;
@@ -72,7 +76,7 @@
             margin: 10px;
             font-family: inherit;
             font-weight: bold;
-            transition: all 0.2s;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
         .btn:active {
             transform: translateY(4px);
@@ -143,8 +147,8 @@
         }
         #task-bar-container {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: max(20px, env(safe-area-inset-top));
+            left: max(20px, env(safe-area-inset-left));
             background: rgba(0,0,0,0.6);
             padding: 10px 20px;
             border-radius: 15px;
@@ -164,15 +168,42 @@
             background: #2ed573;
             transition: width 0.3s;
         }
-        /* Görev Butonu Varsayılan Ayarları (Oyun İçi JS ile güncellenecek) */
+        
+        /* Sağ Alt Butonlar (iPad ve Telefon için Yüzdelik Oranlarla Esnek) */
         #action-btn { 
-            position: absolute; bottom: 30px; right: 30px; 
-            background: #ffa502; box-shadow: 0 5px 0 #cc8400; 
-            opacity: 0.4; pointer-events: none;
+            position: absolute; 
+            bottom: max(30px, 5vh); 
+            right: max(30px, 5vw); 
+            background: #ffa502; 
+            box-shadow: 0 5px 0 #cc8400; 
+            opacity: 0.4; 
+            pointer-events: none;
         }
-        #meeting-btn { position: absolute; bottom: 30px; right: 190px; background: #3742fa; box-shadow: 0 5px 0 #2f3542; }
-        #settings-hud-btn { top: 20px; right: 20px; position: absolute; padding: 8px 15px; font-size: 1rem; }
-        #restart-hud-btn { top: 20px; right: 75px; position: absolute; padding: 8px 15px; font-size: 1rem; background: #ff4757; box-shadow: 0 4px 0 #b33939; }
+        #meeting-btn { 
+            position: absolute; 
+            bottom: max(30px, 5vh); 
+            right: max(190px, 25vw); 
+            background: #3742fa; 
+            box-shadow: 0 5px 0 #2f3542; 
+        }
+        
+        /* Sağ Üst Butonlar */
+        #settings-hud-btn { 
+            top: max(20px, env(safe-area-inset-top)); 
+            right: max(20px, env(safe-area-inset-right)); 
+            position: absolute; 
+            padding: 8px 15px; 
+            font-size: 1rem; 
+        }
+        #restart-hud-btn { 
+            top: max(20px, env(safe-area-inset-top)); 
+            right: max(75px, calc(env(safe-area-inset-right) + 55px)); 
+            position: absolute; 
+            padding: 8px 15px; 
+            font-size: 1rem; 
+            background: #ff4757; 
+            box-shadow: 0 4px 0 #b33939; 
+        }
 
         /* Modals */
         .overlay-modal {
@@ -190,11 +221,12 @@
             max-width: 550px;
             text-align: center;
         }
-        /* Mobile Joystick */
+        
+        /* Mobil Joystick (Ekrandan taşmaması için Dinamik Oranlar) */
         #joystick-base {
             position: absolute;
-            bottom: 30px;
-            left: 30px;
+            bottom: max(30px, 6vh);
+            left: max(30px, 5vw);
             width: 110px;
             height: 110px;
             background: rgba(255,255,255,0.25);
@@ -532,367 +564,46 @@
     window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-    const joystickBase = document.getElementById('joystick-base');
-    const joystickStick = document.getElementById('joystick-stick');
+    const joystickBase**Açıklama:**
+Bu kod, web sayfanızı tüm cihazlara (responsive) uyumlu hale getirir. Apple cihazlarındaki (iPad/iPhone) ekran kenar boşluklarını (`safe-area-inset`) otomatik olarak hesaba katarak, butonun alt menü çubuğuna veya ekran köşesine sıkışıp görünmez olmasını engeller. 
 
-    joystickBase.addEventListener('pointerdown', e => {
-        touchJoystick.active = true;
-        touchJoystick.id = e.pointerId;
-        updateJoystick(e);
-    });
-    window.addEventListener('pointermove', e => {
-        if (touchJoystick.active && e.pointerId === touchJoystick.id) updateJoystick(e);
-    });
-    window.addEventListener('pointerup', e => {
-        if (touchJoystick.active && e.pointerId === touchJoystick.id) {
-            touchJoystick.active = false;
-            touchJoystick.dx = 0;
-            touchJoystick.dy = 0;
-            joystickStick.style.transform = `translate(0px, 0px)`;
-        }
-    });
+**Nerede ve Nasıl Kullanılmalı:**
+1. `<meta name="viewport"...>` ile başlayan satırı projenizdeki `<head>` etiketleri arasına ekleyin.
+2. `<style>` içindeki CSS kodlarını projenizin CSS dosyasına veya `<head>` bölümüne yerleştirin.
+3. Kontrol butonunuzun HTML koduna `class="sol-alt-buton"` özelliğini ekleyin.
 
-    function updateJoystick(e) {
-        const rect = joystickBase.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        let dx = e.clientX - centerX;
-        let dy = e.clientY - centerY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = 40;
-        if (dist > maxDist) {
-            dx = (dx / dist) * maxDist;
-            dy = (dy / dist) * maxDist;
-        }
-        joystickStick.style.transform = `translate(${dx}px, ${dy}px)`;
-        touchJoystick.dx = dx / maxDist;
-        touchJoystick.dy = dy / maxDist;
-    }
-
-    function gameLoop() {
-        if (!gameRunning) return;
-        update();
-        render();
-        requestAnimationFrame(gameLoop);
-    }
-
-    function update() {
-        let moveX = 0;
-        let moveY = 0;
-
-        if (keys['w'] || keys['arrowup']) moveY -= 1;
-        if (keys['s'] || keys['arrowdown']) moveY += 1;
-        if (keys['a'] || keys['arrowleft']) moveX -= 1;
-        if (keys['d'] || keys['arrowright']) moveX += 1;
-
-        if (touchJoystick.active) {
-            moveX = touchJoystick.dx;
-            moveY = touchJoystick.dy;
-        }
-
-        if (moveX !== 0 && moveY !== 0) {
-            moveX *= 0.7071;
-            moveY *= 0.7071;
-        }
-
-        player.x += moveX * player.speed;
-        player.y += moveY * player.speed;
-
-        player.x = Math.max(80, Math.min(gameMap.width - 80, player.x));
-        player.y = Math.max(80, Math.min(gameMap.height - 80, player.y));
-
-        aiList.forEach(ai => {
-            if (!ai.alive) return;
-            ai.timer++;
-            if (ai.timer > 120) {
-                ai.timer = 0;
-                ai.targetX = ai.x + (Math.random() - 0.5) * 400;
-                ai.targetY = ai.y + (Math.random() - 0.5) * 400;
-            }
-            let angle = Math.atan2(ai.targetY - ai.y, ai.targetX - ai.x);
-            ai.x += Math.cos(angle) * ai.speed;
-            ai.y += Math.sin(angle) * ai.speed;
-
-            ai.x = Math.max(80, Math.min(gameMap.width - 80, ai.x));
-            ai.y = Math.max(80, Math.min(gameMap.height - 80, ai.y));
-        });
-
-        currentTaskTarget = null;
-        tasks.forEach(t => {
-            if (!t.completed) {
-                let dist = Math.hypot(player.x - t.x, player.y - t.y);
-                if (dist < 80) currentTaskTarget = t; // Görev algılama mesafesini biraz artırdık
-            }
-        });
-
-        // --- DİNAMİK BUTON GÖRÜNÜMÜ GÜNCELLEMESİ (AMONG US TARZI) ---
-        let actionBtn = document.getElementById('action-btn');
-        if (player.isImpostor) {
-            // Suçlu hedefe yaklaştı mı?
-            let targetAI = aiList.find(ai => ai.alive && Math.hypot(player.x - ai.x, player.y - ai.y) < 80);
-            if (targetAI) {
-                actionBtn.style.opacity = '1';
-                actionBtn.style.pointerEvents = 'auto';
-                actionBtn.style.background = '#ff4757';
-                actionBtn.style.boxShadow = '0 5px 0 #b33939';
-                actionBtn.innerText = '🔪 ELE';
-            } else {
-                actionBtn.style.opacity = '0.4';
-                actionBtn.style.pointerEvents = 'none';
-                actionBtn.style.background = '#ff4757';
-                actionBtn.style.boxShadow = '0 5px 0 #b33939';
-                actionBtn.innerText = '🔪 ELE';
-            }
-        } else {
-            // Mürettebat göreve yaklaştı mı?
-            if (currentTaskTarget) {
-                actionBtn.style.opacity = '1';
-                actionBtn.style.pointerEvents = 'auto';
-                actionBtn.style.background = '#ffa502';
-                actionBtn.style.boxShadow = '0 5px 0 #cc8400';
-                actionBtn.innerText = '⭐ GÖREV YAP';
-            } else {
-                actionBtn.style.opacity = '0.4';
-                actionBtn.style.pointerEvents = 'none';
-                actionBtn.style.background = '#ffa502';
-                actionBtn.style.boxShadow = '0 5px 0 #cc8400';
-                actionBtn.innerText = '⭐ GÖREV';
-            }
-        }
-    }
-
-    function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.save();
-        let camX = canvas.width / 2 - player.x;
-        let camY = canvas.height / 2 - player.y;
-        ctx.translate(camX, camY);
-
-        ctx.fillStyle = "#0f0c29"; 
-        ctx.fillRect(0, 0, gameMap.width, gameMap.height);
-
-        backgroundStars.forEach(s => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-            ctx.fill();
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <!-- Sayfayı responsive (ekrana uyumlu) yapan ve iPad çentik/boşluk alanlarını tanıyan kod -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <style>
+        .sol-alt-buton {
+            position: fixed; /* Butonu ekranda sabit tutar */
             
-            s.alpha += s.speed;
-            if (s.alpha <= 0.2 || s.alpha >= 1) s.speed = -s.speed;
-        });
-
-        gameMap.rooms.forEach(room => {
-            let rImg = loadedRooms[room.id];
+            /* iPad'in kendi alt ve sol ekran çerçevesi (safe-area) boşluklarını hesaba katar + 20px ekstra boşluk bırakır */
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            left: calc(20px + env(safe-area-inset-left));
             
-            if (rImg && rImg.complete && rImg.naturalWidth !== 0) {
-                ctx.drawImage(rImg, room.x, room.y, room.w, room.h);
-                ctx.strokeStyle = room.color;
-                ctx.lineWidth = 6;
-                ctx.strokeRect(room.x, room.y, room.w, room.h);
-            } else {
-                ctx.fillStyle = room.color;
-                ctx.fillRect(room.x, room.y, room.w, room.h);
-                ctx.strokeStyle = "#fff";
-                ctx.lineWidth = 4;
-                ctx.strokeRect(room.x, room.y, room.w, room.h);
-            }
-
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
-            let textWidth = ctx.measureText(room.name).width;
-            ctx.fillRect(room.x + 15, room.y + 10, textWidth + 30, 40);
-            ctx.fillStyle = "#fff";
-            ctx.font = "bold 22px sans-serif";
-            ctx.textAlign = "left";
-            ctx.fillText(room.name, room.x + 30, room.y + 38);
-        });
-
-        tasks.forEach(t => {
-            if (!t.completed) {
-                ctx.fillStyle = "#f1c40f";
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, 18, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = "#fff";
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                ctx.fillStyle = "#333";
-                ctx.font = "bold 14px sans-serif";
-                ctx.textAlign = "center";
-                ctx.fillText("⭐", t.x, t.y + 5);
-            }
-        });
-
-        aiList.forEach(ai => {
-            drawCharacterSprite(ai.x, ai.y, ai.name, ai.alive, ai.charName);
-        });
-
-        drawCharacterSprite(player.x, player.y, player.name, player.alive, player.charName, true);
-
-        ctx.restore();
-    }
-
-    function drawCharacterSprite(x, y, name, alive, charName, isPlayer = false) {
-        ctx.save();
-        ctx.translate(x, y);
-
-        if (!alive) {
-            ctx.fillStyle = "gray";
-            ctx.font = "20px sans-serif";
-            ctx.fillText("👻 Ruh", -25, 10);
-            ctx.restore();
-            return;
-        }
-
-        let img = loadedImages[charName];
-
-        if (img && img.complete && img.naturalWidth !== 0) {
-            let renderHeight = 80; 
-            let renderWidth = renderHeight * (img.width / img.height); 
-
-            ctx.drawImage(img, -renderWidth/2, -renderHeight/2, renderWidth, renderHeight);
-
-            if (isPlayer) {
-                ctx.strokeStyle = "#ff1493";
-                ctx.lineWidth = 3;
-                ctx.strokeRect(-renderWidth/2 - 6, -renderHeight/2 - 6, renderWidth + 12, renderHeight + 12);
-            }
-        } else {
-            ctx.fillStyle = isPlayer ? "#ff1493" : "#70a1ff";
-            ctx.fillRect(-24, -36, 48, 72);
-        }
-
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 14px sans-serif";
-        ctx.textAlign = "center";
-        ctx.shadowColor = "#000";
-        ctx.shadowBlur = 4;
-        ctx.fillText(name, 0, -50); 
-
-        ctx.restore();
-    }
-
-    let activeMinigameTask = null;
-    let clickCount = 0;
-
-    function doAction() {
-        if (currentTaskTarget) {
-            activeMinigameTask = currentTaskTarget;
-            clickCount = 0;
-            document.getElementById('mg-title').innerText = currentTaskTarget.name;
-            document.getElementById('mg-click-btn').innerText = `Tıkla! (0/5)`;
-            document.getElementById('minigame-modal').classList.remove('hidden');
-            gameRunning = false; // Görev açılınca oyunu durdur
-        } else if (player.isImpostor) {
-            let targetAI = aiList.find(ai => ai.alive && Math.hypot(player.x - ai.x, player.y - ai.y) < 80);
-            if (targetAI) {
-                targetAI.alive = false;
-                speak("Birisi ortadan kayboldu!");
-                checkWinConditions();
-            }
-        }
-    }
-
-    function progressMinigame() {
-        clickCount++;
-        document.getElementById('mg-click-btn').innerText = `Tıkla! (${clickCount}/5)`;
-        if (clickCount >= 5) {
-            activeMinigameTask.completed = true;
+            z-index: 9999; /* Butonun diğer tüm resim veya yazıların üstünde görünmesini sağlar */
             
-            // Görev tamamlandığında oyun döngüsünü yeniden ateşle (HATA ÇÖZÜMÜ)
-            if (!gameRunning) {
-                gameRunning = true;
-                requestAnimationFrame(gameLoop);
-            }
-            
-            player.tasksCompleted++;
-            document.getElementById('task-progress-fill').style.width = `${(player.tasksCompleted / player.totalTasks) * 100}%`;
-            
-            // Modal'ı kapat
-            document.getElementById('minigame-modal').classList.add('hidden');
-            speak("Görev tamamlandı!");
-            checkWinConditions();
+            /* Görünüm ayarları (Kendi tasarımınıza göre değiştirebilirsiniz) */
+            padding: 12px 24px;
+            background-color: #ED637B;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-    }
+    </style>
+</head>
+<body>
 
-    function closeMinigame(success) {
-        document.getElementById('minigame-modal').classList.add('hidden');
-        
-        // "İptal" tuşuna basıldığında duran oyun motorunu yeniden çalıştırıyoruz (HATA ÇÖZÜMÜ)
-        if (!gameRunning) {
-            gameRunning = true;
-            requestAnimationFrame(gameLoop);
-        }
-    }
+    <!-- Sol altta tam görünecek kontrol butonunuz -->
+    <button class="sol-alt-buton">Kontrol Butonu</button>
 
-    function callMeeting() {
-        gameRunning = false;
-        document.getElementById('meeting-modal').classList.remove('hidden');
-        let log = document.getElementById('meeting-log');
-        log.innerHTML = `<b>Acil Durum Başlatıldı!</b><br>`;
-        log.innerHTML += `<i>Hello Kitty:</i> "Laboratuvarın orada şüpheli bir şeyler gördüm!"<br>`;
-        log.innerHTML += `<i>Bluey:</i> "Ben görevimi yapıyordum."<br>`;
-
-        speak("Acil durum toplantısı başladı. Lütfen oyunculardan birini oyla.");
-
-        let votingDiv = document.getElementById('voting-options');
-        votingDiv.innerHTML = '';
-
-        aiList.forEach((ai) => {
-            if (ai.alive) {
-                let btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.style.fontSize = '1rem';
-                btn.style.padding = '10px 15px';
-                btn.innerText = ai.name;
-                btn.onclick = () => castVote(ai.name);
-                votingDiv.appendChild(btn);
-            }
-        });
-        let skipBtn = document.createElement('button');
-        skipBtn.className = 'btn btn-secondary';
-        skipBtn.style.fontSize = '1rem';
-        skipBtn.style.padding = '10px 15px';
-        skipBtn.innerText = "Atla (Skip)";
-        skipBtn.onclick = () => castVote("Kimse");
-        votingDiv.appendChild(skipBtn);
-    }
-
-    function castVote(targetName) {
-        document.getElementById('meeting-modal').classList.add('hidden');
-        
-        // Oylama bitince duran motoru tekrar çalıştırıyoruz
-        if (!gameRunning) {
-            gameRunning = true;
-            requestAnimationFrame(gameLoop);
-        }
-        
-        speak(`${targetName} oylandı.`);
-        checkWinConditions();
-    }
-
-    function checkWinConditions() {
-        if (player.tasksCompleted >= player.totalTasks) {
-            endGame(true, "Mürettebat görevleri tamamlayarak kazandı! 🎉");
-        }
-    }
-
-    function endGame(won, message) {
-        gameRunning = false;
-        document.getElementById('go-title').innerText = won ? "KAZANDINIZ! 🏆" : "KAYBETTİNİZ! 😢";
-        document.getElementById('go-desc').innerText = message;
-        document.getElementById('gameover-modal').classList.remove('hidden');
-        speak(message);
-    }
-
-    function togglePause() {
-        gameRunning = !gameRunning;
-        if (gameRunning) requestAnimationFrame(gameLoop);
-    }
-
-    function saveSettings() {
-        alert("Ayarlar kaydedildi!");
-    }
-</script>
 </body>
 </html>
