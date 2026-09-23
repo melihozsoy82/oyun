@@ -13,7 +13,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #0f0c29;
+            background: #1a1a2e;
             font-family: 'Comic Sans MS', 'Chalkboard SE', 'Bubblegum Sans', sans-serif;
             overflow: hidden;
             color: #fff;
@@ -31,10 +31,9 @@
         }
         canvas {
             display: block;
-            /* Arkaplan rengini koda devrettik */
             background: #000;
         }
-        /* Responsive UI Screens */
+        /* Responsive UI Screens for iPad & Mobile */
         .screen {
             position: absolute;
             top: 0;
@@ -86,6 +85,7 @@
         .btn-secondary:active {
             box-shadow: 0 2px 0 #26af5f, 0 5px 10px rgba(0,0,0,0.3);
         }
+        /* Character Grid */
         .grid {
             display: flex;
             gap: 20px;
@@ -167,6 +167,7 @@
         #action-btn { position: absolute; bottom: 30px; right: 30px; background: #ffa502; box-shadow: 0 5px 0 #cc8400; }
         #meeting-btn { position: absolute; bottom: 30px; right: 190px; background: #3742fa; box-shadow: 0 5px 0 #2f3542; }
         #settings-hud-btn { top: 20px; right: 20px; position: absolute; padding: 8px 15px; font-size: 1rem; }
+        #restart-hud-btn { top: 20px; right: 75px; position: absolute; padding: 8px 15px; font-size: 1rem; background: #ff4757; box-shadow: 0 4px 0 #b33939; }
 
         /* Modals */
         .overlay-modal {
@@ -215,6 +216,7 @@
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
+    <!-- MAIN MENU -->
     <div id="main-menu" class="screen">
         <h1>Hello Kitty<br>Mystery Crew</h1>
         <button class="btn" onclick="showScreen('char-screen')">OYNA</button>
@@ -222,6 +224,7 @@
         <button class="btn" style="background:#3742fa; box-shadow:0 6px 0 #2f3542;" onclick="showScreen('howto-screen')">NASIL OYNANIR</button>
     </div>
 
+    <!-- CHARACTER SELECTION -->
     <div id="char-screen" class="screen hidden">
         <h1>Karakterini Seç</h1>
         <div class="grid" id="char-grid">
@@ -246,6 +249,7 @@
         <button class="btn btn-secondary" onclick="showScreen('main-menu')">GERİ</button>
     </div>
 
+    <!-- LEVEL SELECTION -->
     <div id="level-screen" class="screen hidden">
         <h1>Harita Seç</h1>
         <div class="grid">
@@ -262,6 +266,7 @@
         <button class="btn btn-secondary" onclick="showScreen('char-screen')">GERİ</button>
     </div>
 
+    <!-- SETTINGS SCREEN -->
     <div id="settings-screen" class="screen hidden">
         <h1>Ayarlar</h1>
         <div style="background:white; padding:20px; border-radius:20px; color:#333; width:min(90vw, 350px); text-align:left;">
@@ -278,6 +283,7 @@
         <button class="btn" onclick="saveSettings(); showScreen('main-menu')">KAYDET & ÇIK</button>
     </div>
 
+    <!-- HOW TO PLAY SCREEN -->
     <div id="howto-screen" class="screen hidden">
         <h1>Nasıl Oynanır?</h1>
         <div style="background:white; padding:20px; border-radius:20px; color:#333; width:min(90vw, 450px); text-align:left; font-size:1rem;">
@@ -289,20 +295,24 @@
         <button class="btn" onclick="showScreen('main-menu')">ANAMENÜ</button>
     </div>
 
+    <!-- IN-GAME HUD -->
     <div id="hud">
         <div id="task-bar-container" class="hud-element">
             <div style="font-size:0.9rem;">Görev İlerlemesi</div>
             <div id="task-progress"><div id="task-progress-fill"></div></div>
         </div>
+        <button id="restart-hud-btn" class="btn hud-element" onclick="location.reload()">🔄</button>
         <button id="settings-hud-btn" class="btn hud-element" onclick="togglePause()">⏸️</button>
         <button id="meeting-btn" class="btn hud-element" onclick="callMeeting()">📢 ACİL</button>
         <button id="action-btn" class="btn hud-element" onclick="doAction()">⭐ GÖREV</button>
     </div>
 
+    <!-- MOBILE JOYSTICK -->
     <div id="joystick-base">
         <div id="joystick-stick"></div>
     </div>
 
+    <!-- MINIGAME MODAL -->
     <div id="minigame-modal" class="overlay-modal hidden">
         <h2 id="mg-title">Görev Yapılıyor</h2>
         <p id="mg-desc">Tamamlamak için butona art arda tıkla!</p>
@@ -312,6 +322,7 @@
         <button class="btn btn-secondary" onclick="closeMinigame(false)">İptal</button>
     </div>
 
+    <!-- MEETING MODAL -->
     <div id="meeting-modal" class="overlay-modal hidden">
         <h2>ACİL DURUM TOPLANTISI</h2>
         <div id="meeting-log" style="height:140px; background:#f0f0f0; border-radius:10px; padding:10px; overflow-y:auto; text-align:left; margin-bottom:15px; font-size:0.9rem;"></div>
@@ -319,6 +330,7 @@
         <div id="voting-options" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;"></div>
     </div>
 
+    <!-- GAME OVER MODAL -->
     <div id="gameover-modal" class="overlay-modal hidden">
         <h1 id="go-title" style="font-size:2.2rem;">OYUN BİTTİ</h1>
         <p id="go-desc" style="font-size:1.2rem; color:#333;"></p>
@@ -473,8 +485,10 @@
 
         generateMap();
         generateTasks();
-        generateStars(); // Arka plan yıldızlarını oluştur
+        generateStars();
         requestAnimationFrame(gameLoop);
+        
+        // Zeynep'e özel başlangıç mesajı
         speak("Merhaba Zeynep, Oyun başladı! Görevleri tamamla veya suçluyu bul.");
     }
 
@@ -499,7 +513,6 @@
         player.totalTasks = tasks.length;
     }
 
-    // Harita arkaplanı için parlayan rastgele yıldızlar
     function generateStars() {
         backgroundStars = [];
         for(let i=0; i<400; i++) {
@@ -618,8 +631,7 @@
         let camY = canvas.height / 2 - player.y;
         ctx.translate(camX, camY);
 
-        // 1. UZAY ARKA PLANINI (YILDIZLARI) ÇİZ
-        ctx.fillStyle = "#0f0c29"; // Lacivert/Mor uzay rengi
+        ctx.fillStyle = "#0f0c29"; 
         ctx.fillRect(0, 0, gameMap.width, gameMap.height);
 
         backgroundStars.forEach(s => {
@@ -628,12 +640,10 @@
             ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
             ctx.fill();
             
-            // Yıldızların parlaması için basit animasyon
             s.alpha += s.speed;
             if (s.alpha <= 0.2 || s.alpha >= 1) s.speed = -s.speed;
         });
 
-        // 2. ODALARI ÇİZ
         gameMap.rooms.forEach(room => {
             let rImg = loadedRooms[room.id];
             
@@ -659,7 +669,6 @@
             ctx.fillText(room.name, room.x + 30, room.y + 38);
         });
 
-        // 3. GÖREVLERİ ÇİZ
         tasks.forEach(t => {
             if (!t.completed) {
                 ctx.fillStyle = "#f1c40f";
@@ -676,7 +685,6 @@
             }
         });
 
-        // 4. KARAKTERLERİ ÇİZ
         aiList.forEach(ai => {
             drawCharacterSprite(ai.x, ai.y, ai.name, ai.alive, ai.charName);
         });
